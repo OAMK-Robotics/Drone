@@ -9,7 +9,7 @@ from paho.mqtt import client as mqtt_module
 # ---------- MQTT configuration ----------
 MQTT_BROKER = "192.168.1.96"       # Your MQTT broker IP
 MQTT_PORT = 1883
-MQTT_TOPIC = "tello/table_detection"
+MQTT_TOPIC = "restaurant/tello/events/customer-detected"
 MQTT_CLIENT_ID = "tello-" + str(random.randint(0, 1000))
 
 mqtt_connected = False
