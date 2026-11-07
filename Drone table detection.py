@@ -2,7 +2,32 @@ from djitellopy import Tello
 from threading import Thread, Event
 import time
 import cv2
+import paho.mqtt.client as mqtt
 
+MQTT_BROKER = "192.168.1.96"
+MQTT_PORT = 1883
+MQTT_TOPIC = "restaurant/tello/events/customer-detected"
+
+
+
+def publish_table_event(pad):
+    message = f"Table {1 if pad == 1 else 2} found"
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+
+    try:
+        client.connect(MQTT_BROKER, MQTT_PORT, keepalive=30)
+        client.loop_start()
+
+        result = client.publish(MQTT_TOPIC, message, qos=1)
+        result.wait_for_publish(timeout=3)
+        print("MQTT published:", message)
+
+    except Exception as e:
+        print("MQTT publishing failed:", e)
+
+    finally:
+        client.disconnect()
+        client.loop_stop()
 
 tello = Tello()
 tello.connect()
@@ -83,6 +108,7 @@ search_direction = "right"
 search_distance = 50  # cm
 max_search_steps = 10  # safety limit
 search_step = 0
+net_displacement = 0  # cm; right is positive
 
 
 try:
@@ -99,51 +125,43 @@ try:
     # tello.move_up(100)
     time.sleep(2)
 
-    test_start = time.monotonic()
-    test_duration = 10  # seconds
+    # Search at START, RIGHT 50 cm, LEFT 50 cm
+    scan_positions = [0, 50, -50]
 
-    while time.monotonic() - test_start < test_duration:
+    for position in scan_positions:
+        movement = position - net_displacement
+
+        if movement > 0:
+            tello.move_right(movement)
+            net_displacement += movement
+        elif movement < 0:
+            tello.move_left(abs(movement))
+            net_displacement += movement
+
+        time.sleep(1)
+
         pad = tello.get_mission_pad_id()
-
-        if pad in (1, 3):
-            pad_x = tello.get_mission_pad_distance_x()
-            pad_y = tello.get_mission_pad_distance_y()
-            pad_z = tello.get_mission_pad_distance_z()
-
-            print(
-                f"Pad: {pad} | "
-                f"X: {pad_x} cm | "
-                f"Y: {pad_y} cm | "
-                f"Z: {pad_z} cm"
-            )
-        else:
-            print(f"No target pad detected (ID: {pad})")
-
-        if pad != last_printed_pad:
-            print("Mission pad ID:", pad)
-            last_printed_pad = pad
+        print("Position:", net_displacement, "cm | Pad:", pad)
 
         if pad == 1:
             print("Table 1 found")
-
-
+            publish_table_event(pad)
+            target_found = True
+            break
         elif pad == 3:
             print("Table 2 found")
+            publish_table_event(pad)
+            target_found = True
+            break
 
+    # Return to START before landing
+    if net_displacement > 0:
+        tello.move_left(net_displacement)
+    elif net_displacement < 0:
+        tello.move_right(abs(net_displacement))
 
-        #elif pad == -2:
-            #print("Mission-pad detection is not enabled")
-            #break
-
-        else:
-
-            time.sleep(0.5)
-
-    if target_found:
-        print("Landing on found table")
-    else:
-        print("No table found; landing")
-    #tello.move_back(200)
+    net_displacement = 0
+    print("Return movement completed")
     tello.land()
 
 except Exception as e:
@@ -166,3 +184,4 @@ finally:
 
     tello.streamoff()
     tello.end()
+
