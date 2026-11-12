@@ -32,6 +32,19 @@ class TestFlightSafety(unittest.TestCase):
         )
         cls.program = compile(module, "<offline-flight>", "exec")
 
+        helper = next(
+            n for n in tree.body
+            if isinstance(n, ast.FunctionDef)
+            and n.name == "one_attempt_move"
+        )
+        helper_module = ast.fix_missing_locations(
+            ast.Module(body=[helper], type_ignores=[])
+        )
+        cls.helper_program = compile(
+            helper_module, "<offline-helper>", "exec"
+        )
+
+
     def scenario(self, mode, expected_land):
         drone = MagicMock()
         drone.get_mission_pad_id.return_value = -1
@@ -80,7 +93,10 @@ class TestFlightSafety(unittest.TestCase):
             "publish_table_event": MagicMock(),
         }
 
+        drone.retry_count = 3
+        exec(self.helper_program, context)
         exec(self.program, context)
+        self.assertEqual(drone.retry_count, 3)
 
         self.assertEqual(drone.land.call_count, expected_land)
         recorder.join.assert_called_once_with(timeout=5)
@@ -127,6 +143,41 @@ class TestFlightSafety(unittest.TestCase):
 
     def test_movement_failure(self):
         self.scenario("movement_error", 1)
+
+
+
+    def test_movement_uses_one_attempt(self):
+        drone = MagicMock()
+        drone.retry_count = 3
+
+        def check_move(distance):
+            self.assertEqual(distance, 50)
+            self.assertEqual(drone.retry_count, 1)
+
+        drone.move_right.side_effect = check_move
+        context = {"tello": drone}
+        exec(self.helper_program, context)
+        context["one_attempt_move"](drone.move_right, 50)
+
+        self.assertEqual(drone.retry_count, 3)
+        drone.move_right.assert_called_once_with(50)
+
+    def test_movement_restores_retries_on_interrupt(self):
+        drone = MagicMock()
+        drone.retry_count = 3
+
+        def interrupted_move(distance):
+            self.assertEqual(drone.retry_count, 1)
+            raise KeyboardInterrupt()
+
+        drone.move_right.side_effect = interrupted_move
+        context = {"tello": drone}
+        exec(self.helper_program, context)
+
+        with self.assertRaises(KeyboardInterrupt):
+            context["one_attempt_move"](drone.move_right, 50)
+
+        self.assertEqual(drone.retry_count, 3)
 
 
 if __name__ == "__main__":

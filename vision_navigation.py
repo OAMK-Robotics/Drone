@@ -115,6 +115,15 @@ net_displacement = 0  # cm; right is positive
 takeoff_attempted = False
 landing_command_returned = False
 
+def one_attempt_move(command, distance):
+    original_retries = tello.retry_count
+    try:
+        tello.retry_count = 1
+        command(distance)
+    finally:
+        tello.retry_count = original_retries
+
+
 
 try:
 
@@ -138,10 +147,10 @@ try:
         movement = position - net_displacement
 
         if movement > 0:
-            tello.move_right(movement)
+            one_attempt_move(tello.move_right, movement)
             net_displacement += movement
         elif movement < 0:
-            tello.move_left(abs(movement))
+            one_attempt_move(tello.move_left, abs(movement))
             net_displacement += movement
 
         time.sleep(1)
@@ -162,9 +171,9 @@ try:
 
     # Return to START before landing
     if net_displacement > 0:
-        tello.move_left(net_displacement)
+        one_attempt_move(tello.move_left, net_displacement)
     elif net_displacement < 0:
-        tello.move_right(abs(net_displacement))
+        one_attempt_move(tello.move_right, abs(net_displacement))
 
     net_displacement = 0
     print("Return movement completed")
