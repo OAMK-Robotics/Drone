@@ -1,4 +1,4 @@
-﻿from djitellopy import Tello
+from djitellopy import Tello
 from threading import Thread, Event
 import time
 import cv2
@@ -112,6 +112,8 @@ search_distance = 50  # cm
 max_search_steps = 10  # safety limit
 search_step = 0
 net_displacement = 0  # cm; right is positive
+takeoff_attempted = False
+landing_command_returned = False
 
 
 try:
@@ -124,6 +126,7 @@ try:
     if recording_failed.is_set():
         raise RuntimeError("Recording failed; takeoff cancelled")
 
+    takeoff_attempted = True
     tello.takeoff()
     # tello.move_up(100)
     time.sleep(2)
@@ -166,29 +169,36 @@ try:
     net_displacement = 0
     print("Return movement completed")
     tello.land()
+    landing_command_returned = True
+
+except KeyboardInterrupt:
+    print("Operator interrupted mission; attempting landing.")
 
 except Exception as e:
-    print("Error:", e)
-
-    try:
-        #tello.move_back(200)
-        tello.land()
-    except Exception:
-        pass
+    print("Flight error:", e)
 
 finally:
+    # Landing comes before recording or connection cleanup.
+    if takeoff_attempted and not landing_command_returned:
+        try:
+            tello.land()
+            landing_command_returned = True
+            print("Landing command acknowledged")
+        except Exception as land_error:
+            print("CRITICAL: Landing command failed:", land_error)
+
     keep_recording = False
-    recorder.join()
-
     try:
-        tello.disable_mission_pads()
-    except Exception:
-        pass
+        recorder.join(timeout=5)
+    except Exception as cleanup_error:
+        print("Recording cleanup failed:", cleanup_error)
 
-    tello.streamoff()
-    tello.end()
-
-
-
-
-
+    for label, cleanup in (
+        ("mission pads", tello.disable_mission_pads),
+        ("video stream", tello.streamoff),
+        ("connection", tello.end),
+    ):
+        try:
+            cleanup()
+        except Exception as cleanup_error:
+            print(f"Cleanup failed ({label}): {cleanup_error}")
