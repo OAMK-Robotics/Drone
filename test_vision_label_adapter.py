@@ -1,4 +1,4 @@
-﻿import cv2
+import cv2
 import numpy as np
 
 from vision_label_adapter import resolve_vision_label
@@ -66,4 +66,10 @@ main_junction = resolve_vision_label(
 assert controller.update(main_junction) == "SELECT_TABLE_B"
 
 print("PASS: Camera marker -> Controller -> Table B")
-print("Integration tests: 4/4 PASSED")
+assert resolve_vision_label(make_frame(23), "UNKNOWN") == "UNKNOWN"
+print("PASS: UNKNOWN preserved")
+
+assert resolve_vision_label(make_frame(23), "TABLE_ZONE") == "TABLE_ZONE"
+print("PASS: TABLE_ZONE preserved")
+
+print("Integration tests: 6/6 PASSED")

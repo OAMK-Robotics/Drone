@@ -1,4 +1,4 @@
-﻿from junction_marker_detector import detect_junction_marker
+from junction_marker_detector import detect_junction_marker
 
 
 def resolve_vision_label(frame, base_label):
@@ -6,7 +6,7 @@ def resolve_vision_label(frame, base_label):
 
     marker = detect_junction_marker(frame)
 
-    if marker is not None and marker["id"] == 23:
+    if base_label == "JUNCTION" and marker is not None and marker["id"] == 23:
         return "MAIN_JUNCTION"
 
     return base_label
