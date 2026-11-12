@@ -4,7 +4,7 @@ import time
 import cv2
 import paho.mqtt.client as mqtt
 
-MQTT_BROKER = "192.168.1.96"
+MQTT_BROKER = "192.168.1.19"
 MQTT_PORT = 1883
 MQTT_TOPIC = "restaurant/tello/events/customer-detected"
 
@@ -187,6 +187,7 @@ finally:
 
     tello.streamoff()
     tello.end()
+
 
 
 
