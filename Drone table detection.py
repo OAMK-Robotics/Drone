@@ -85,10 +85,6 @@ def publish(event_type, table_id=None, extra_data=None):
         data.update(extra_data)
 
     payload = {
-        "message_id": message_id,
-        "event_type": event_type,
-        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-        "source": "tello",
         "data": data
     }
 
@@ -137,7 +133,7 @@ def run_tello_mission():
 
         tello.takeoff()
         time.sleep(2)
-
+        tello.move_forward(75)
         while not target_found and search_step < max_search_steps:
             pad = tello.get_mission_pad_id()
 
@@ -167,7 +163,7 @@ def run_tello_mission():
         else:
             publish("no-table-found")
 
-        tello.move_back(150)
+        tello.move_back(75)
         tello.land()
 
     except Exception as e:
@@ -175,7 +171,7 @@ def run_tello_mission():
 
         if tello is not None:
             try:
-                tello.move_back(200)
+                tello.move_back(75)
                 tello.land()
             except Exception:
                 pass
