@@ -3,6 +3,7 @@ import time
 import random
 import json
 import threading
+import traceback
 from datetime import datetime, timezone
 
 from paho.mqtt import client as mqtt_module
@@ -11,7 +12,7 @@ from paho.mqtt import client as mqtt_module
 # ---------- MQTT configuration ----------
 MQTT_BROKER = "192.168.1.96"
 MQTT_PORT = 1883
- 
+
 MQTT_EVENT_TOPIC = "restaurant/tello/events/customer-detected"
 MQTT_COMMAND_TOPIC = "restaurant/tello/commands/start-mission"
 
@@ -21,6 +22,12 @@ message_id = 1
 mqtt_connected = False
 mission_requested = False
 mission_running = False
+
+mission_lock = threading.Lock()
+
+
+def log(message):
+    print(message, flush=True)
 
 
 mqtt_client = mqtt_module.Client(
@@ -35,12 +42,33 @@ def on_mqtt_connect(client, userdata, flags, reason_code, properties):
 
     if not reason_code.is_failure:
         mqtt_connected = True
-        print("Connected to MQTT broker")
+        log("Connected to MQTT broker")
 
-        client.subscribe(MQTT_COMMAND_TOPIC, qos=1)
-        print(f"Subscribed to {MQTT_COMMAND_TOPIC}")
+        result, subscription_id = client.subscribe(
+            MQTT_COMMAND_TOPIC,
+            qos=1,
+        )
+
+        if result == mqtt_module.MQTT_ERR_SUCCESS:
+            log(f"Subscription requested: {MQTT_COMMAND_TOPIC}")
+        else:
+            log(f"MQTT subscription failed: {result}")
     else:
-        print("MQTT connection failed: " + str(reason_code))
+        mqtt_connected = False
+        log(f"MQTT connection failed: {reason_code}")
+
+
+def on_mqtt_disconnect(
+    client,
+    userdata,
+    disconnect_flags,
+    reason_code,
+    properties,
+):
+    global mqtt_connected
+
+    mqtt_connected = False
+    log(f"Disconnected from MQTT broker: {reason_code}")
 
 
 def on_mqtt_message(client, userdata, msg):
@@ -49,78 +77,114 @@ def on_mqtt_message(client, userdata, msg):
     try:
         payload = json.loads(msg.payload.decode("utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError):
-        print("Invalid MQTT command payload received")
+        log("Invalid MQTT command payload received")
+        return
+
+    if not isinstance(payload, dict):
+        log("Invalid MQTT command: expected a JSON object")
         return
 
     command = payload.get("command")
 
     if command == "start_mission":
-        if mission_running:
-            print("Mission already running; ignoring start command")
-            return
+        with mission_lock:
+            if mission_running:
+                log("Mission already running; ignoring start command")
+                return
 
-        print("Start command received")
-        mission_requested = True
+            if mission_requested:
+                log("Mission already requested; ignoring duplicate command")
+                return
+
+            mission_requested = True
+
+        log("Start command received")
     else:
-        print(f"Ignored MQTT command: {command}")
+        log(f"Ignored MQTT command: {command}")
 
 
 mqtt_client.on_connect = on_mqtt_connect
+mqtt_client.on_disconnect = on_mqtt_disconnect
 mqtt_client.on_message = on_mqtt_message
-
-mqtt_client.connect(MQTT_BROKER, MQTT_PORT, keepalive=60)
-mqtt_client.loop_start()
 
 
 def publish(event_type, table_id=None, extra_data=None):
-    """Publish an event using the required JSON schema."""
+    """Publish an event without allowing MQTT errors to interrupt flight."""
     global message_id
 
-    data = {}
-
+    # Ignore events with invalid table IDs.
+    # Events without a table ID are still allowed.
     if table_id is not None:
-        data["table_id"] = table_id
+        if not isinstance(table_id, int) or not 1 <= table_id <= 8:
+            return
 
-    if extra_data:
-        data.update(extra_data)
+    try:
+        data = {}
 
-    payload = {
-        "data": data
-    }
+        if table_id is not None:
+            # Publish mission pad 3 as table 2.
+            data["table_id"] = 2 if table_id == 3 else table_id
 
-    message = json.dumps(payload)
+        if extra_data:
+            data.update(extra_data)
 
-    result = mqtt_client.publish(MQTT_EVENT_TOPIC, message, qos=1)
+        # Keep your existing MQTT payload format.
+        payload = {
+            "data": data
+        }
 
-    if result.rc != mqtt_module.MQTT_ERR_SUCCESS:
-        print("MQTT publish failed: " + str(result.rc))
+        message = json.dumps(payload)
+        message_id += 1
 
-    print(message)
+        log(message)
 
-    message_id += 1
+        if not mqtt_connected:
+            log("Warning: MQTT is not connected; event delivery is uncertain")
+
+        result = mqtt_client.publish(
+            MQTT_EVENT_TOPIC,
+            message,
+            qos=1,
+        )
+
+        if result.rc != mqtt_module.MQTT_ERR_SUCCESS:
+            log(f"MQTT publish failed: {result.rc}")
+
+    except Exception:
+        log(f"Failed to publish event: {event_type}")
+        traceback.print_exc()
 
 
 # ---------- Tello mission ----------
 def run_tello_mission():
     global mission_running
 
-    mission_running = True
+    with mission_lock:
+        mission_running = True
 
     TELLO_IP = "192.168.1.63"
 
     tello = None
+    stage = "initializing"
+    takeoff_attempted = False
+    landing_confirmed = False
 
     try:
+        stage = "creating Tello connection"
+        log(f"[CHECK] Connecting to Tello at {TELLO_IP}")
+
         tello = Tello(host=TELLO_IP)
         tello.connect()
 
-        publish(
-            "drone-connected",
-            extra_data={"battery": tello.get_battery()}
-        )
+        log("[CHECK] SDK connection and initial telemetry received")
 
+        stage = "enabling mission pads"
+        log("[CHECK] Enabling mission pads")
         tello.enable_mission_pads()
+
+        stage = "setting mission-pad detection direction"
         tello.set_mission_pad_detection_direction(2)
+        log("[CHECK] Mission-pad detection configured")
 
         target_found = False
         last_printed_pad = None
@@ -131,28 +195,68 @@ def run_tello_mission():
         max_search_steps = 10
         search_step = 0
 
+        stage = "taking off"
+        log("[CHECK] Sending takeoff command")
+
+        # Set before the command because a timeout does not prove
+        # that the drone stayed on the ground.
+        takeoff_attempted = True
         tello.takeoff()
+
+        log("[CHECK] Takeoff command completed")
         time.sleep(2)
+
+        stage = "moving forward 75 cm"
+        log("[CHECK] Moving forward 75 cm")
         tello.move_forward(75)
+
         while not target_found and search_step < max_search_steps:
+            stage = f"reading mission pad at search step {search_step}"
             pad = tello.get_mission_pad_id()
 
-            if pad != last_printed_pad:
-                publish("mission-pad-detected", table_id=pad)
-                last_printed_pad = pad
+            # Only log and publish valid mission-pad IDs.
+            valid_pad = isinstance(pad, int) and 1 <= pad <= 8
+
+            if valid_pad:
+                log(
+                    f"[CHECK] Search step {search_step}/{max_search_steps}, "
+                    f"pad={pad}"
+                )
+
+                if pad != last_printed_pad:
+                    publish("mission-pad-detected", table_id=pad)
+                    last_printed_pad = pad
+            else:
+                # Do not print or publish invalid values.
+                # Allow the same pad to be reported if detected again.
+                last_printed_pad = None
 
             if pad == 1 or pad == 3:
                 publish("customer-detected", table_id=pad)
                 target_found = True
 
             else:
+                # Original search movements preserved.
                 if search_direction == "right":
+                    stage = "search: moving right 50 cm"
+                    log(f"[CHECK] {stage}")
                     tello.move_right(search_distance)
+
                     search_direction = "left"
+
+                    stage = "search: moving left 50 cm"
+                    log(f"[CHECK] {stage}")
                     tello.move_left(search_distance)
+
                 else:
+                    stage = "search: moving left 50 cm"
+                    log(f"[CHECK] {stage}")
                     tello.move_left(search_distance)
+
                     search_direction = "right"
+
+                    stage = "search: moving right 50 cm"
+                    log(f"[CHECK] {stage}")
                     tello.move_right(search_distance)
 
                 search_step += 1
@@ -163,48 +267,99 @@ def run_tello_mission():
         else:
             publish("no-table-found")
 
+        stage = "moving back 75 cm"
+        log("[CHECK] Moving back 75 cm")
         tello.move_back(75)
+
+        stage = "landing"
+        log("[CHECK] Sending landing command")
         tello.land()
+        landing_confirmed = True
 
-    except Exception as e:
-        publish("error", extra_data={"message": str(e)})
+        log("[CHECK] Landing command completed")
 
-        if tello is not None:
+    except BaseException as error:
+        # Includes Ctrl+C so an interrupted flight still gets
+        # a best-effort landing attempt.
+        log(f"[ERROR] Mission failed during: {stage}")
+        log(f"[ERROR] {type(error).__name__}: {error}")
+        traceback.print_exc()
+
+        # Attempt landing before any further MQTT activity.
+        if (
+            tello is not None
+            and takeoff_attempted
+            and not landing_confirmed
+        ):
             try:
-                tello.move_back(75)
+                log("[RECOVERY] Attempting landing without extra movement")
                 tello.land()
+                landing_confirmed = True
+                log("[RECOVERY] Landing command completed")
             except Exception:
-                pass
+                log("[RECOVERY] Landing command failed")
+                traceback.print_exc()
+        else:
+            log("[RECOVERY] No takeoff attempted; skipping landing command")
+
+        publish(
+            "error",
+            extra_data={
+                "message": str(error),
+                "error_type": type(error).__name__,
+                "stage": stage,
+            },
+        )
+
+        if not isinstance(error, Exception):
+            raise
 
     finally:
-        if tello is not None:
-            try:
-                tello.disable_mission_pads()
-            except Exception:
-                pass
+        try:
+            if tello is not None:
+                try:
+                    log("[CLEANUP] Disabling mission pads")
+                    tello.disable_mission_pads()
+                except Exception as error:
+                    log(f"[CLEANUP] Could not disable mission pads: {error}")
 
-            try:
-                tello.end()
-            except Exception:
-                pass
+                try:
+                    log("[CLEANUP] Closing Tello connection")
+                    tello.end()
+                except Exception:
+                    log("[CLEANUP] Could not close Tello connection cleanly")
+                    traceback.print_exc()
+        finally:
+            with mission_lock:
+                mission_running = False
 
-        mission_running = False
+            log("[CHECK] Mission finished")
 
 
 # ---------- Main loop ----------
 try:
-    print(f"Waiting for MQTT command on {MQTT_COMMAND_TOPIC}...")
+    log(f"Connecting to MQTT broker at {MQTT_BROKER}:{MQTT_PORT}")
+    mqtt_client.connect(MQTT_BROKER, MQTT_PORT, keepalive=60)
+    mqtt_client.loop_start()
+
+    log(f"Waiting for MQTT command on {MQTT_COMMAND_TOPIC}...")
 
     while True:
-        if mission_requested and not mission_running:
-            mission_requested = False
+        with mission_lock:
+            start_now = mission_requested and not mission_running
+
+            if start_now:
+                mission_requested = False
+                mission_running = True
+
+        if start_now:
             run_tello_mission()
 
         time.sleep(0.5)
 
 except KeyboardInterrupt:
-    print("Stopping Tello MQTT controller")
+    log("Stopping Tello MQTT controller")
 
 finally:
-    mqtt_client.loop_stop()
     mqtt_client.disconnect()
+    mqtt_client.loop_stop()
