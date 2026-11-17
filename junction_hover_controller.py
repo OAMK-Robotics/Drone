@@ -194,7 +194,7 @@ class JunctionHoverController:
         return status, *requests
 
 
-def replay(folder):
+def replay(folder, recovery_diagnostic=False):
     folder = Path(folder)
     with (folder / "frames.csv").open(newline="") as f:
         rows = list(csv.DictReader(f))
@@ -214,7 +214,10 @@ def replay(folder):
         marker = detect_junction_marker(frame)
         detections += marker is not None
 
-        phase = 'HOVER' if row['phase'] == 'TARGET_CAPTURE_START' else row['phase']
+        if recovery_diagnostic and row["phase"] in ("TARGET_CAPTURE", "TARGET_CAPTURE_START"):
+            phase = "RECOVERY"
+        else:
+            phase = "HOVER" if row["phase"] == "TARGET_CAPTURE_START" else row["phase"]
         status, rx, ry = controller.update(marker, phase=phase)
         counts[status] += 1
 
