@@ -1,3 +1,15 @@
+import sys
+
+if len(sys.argv) == 3 and sys.argv[1] == "--offline":
+    from junction_hover_controller import replay
+    replay(sys.argv[2])
+    raise SystemExit(0)
+
+if sys.argv[1:] != ["--live"]:
+    raise SystemExit(
+        "Blocked: specify --offline FOLDER or --live (real flight)."
+    )
+
 from djitellopy import Tello
 from threading import Thread, Event
 import time
@@ -63,7 +75,7 @@ recording_ready = Event()
 def record():
     frame = frame_read.frame
     if frame is not None:
-        frame = frame[:240, :320].copy()
+        frame = cv2.rotate(cv2.cvtColor(frame[:240, :320].copy(), cv2.COLOR_RGB2BGR), cv2.ROTATE_180)
 
     if frame is None:
         print("Error: Camera frame not available")
@@ -88,7 +100,7 @@ def record():
     try:
         while keep_recording:
             if frame_read.frame is not None:
-                video.write(frame_read.frame[:240, :320].copy())
+                video.write(cv2.rotate(cv2.cvtColor(frame_read.frame[:240, :320].copy(), cv2.COLOR_RGB2BGR), cv2.ROTATE_180))
             time.sleep(1 / 30)
 
     except Exception as e:
