@@ -214,7 +214,7 @@ def run_tello_mission():
             stage = f"reading mission pad at search step {search_step}"
             pad = tello.get_mission_pad_id()
 
-            # Only log and publish valid mission-pad IDs.
+            # Only log valid mission-pad IDs.
             valid_pad = isinstance(pad, int) and 1 <= pad <= 8
 
             if valid_pad:
@@ -223,15 +223,15 @@ def run_tello_mission():
                     f"pad={pad}"
                 )
 
+                # Do not publish a table during pad detection.
                 if pad != last_printed_pad:
-                    publish("mission-pad-detected", table_id=pad)
                     last_printed_pad = pad
             else:
                 # Do not print or publish invalid values.
-                # Allow the same pad to be reported if detected again.
                 last_printed_pad = None
 
             if pad == 1 or pad == 3:
+                # The only table publication in the mission.
                 publish("customer-detected", table_id=pad)
                 target_found = True
 
@@ -263,7 +263,12 @@ def run_tello_mission():
                 time.sleep(0.5)
 
         if target_found:
-            publish("landing-at-table", table_id=pad)
+            # Log locally instead of publishing the table again.
+            table_id = 2 if pad == 3 else pad
+            log(
+                f"[CHECK] Table {table_id} found; "
+                "returning and landing"
+            )
         else:
             publish("no-table-found")
 
