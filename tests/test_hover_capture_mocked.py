@@ -23,7 +23,7 @@ from unittest.mock import patch
 import cv2
 import numpy as np
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "test_hover_capture.py"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
