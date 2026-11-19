@@ -25,6 +25,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "test_hover_capture.py"
+SOURCE = ROOT / "flight" / "test_hover_capture.py"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -128,10 +129,10 @@ class FakeTello:
 
 
 def check_source():
-    if not SCRIPT.is_file():
-        raise SystemExit(f"STOP: capture source missing: {SCRIPT}")
-    source = SCRIPT.read_text(encoding="utf-8-sig")
-    tree = ast.parse(source, filename=str(SCRIPT))
+    if not SOURCE.is_file():
+        raise SystemExit(f"STOP: capture source missing: {SOURCE}")
+    source = SOURCE.read_text(encoding="utf-8-sig")
+    tree = ast.parse(source, filename=str(SOURCE))
     required = ("MotorDisabledObserver", "observe_tello_rgb", "request_executed")
     for name in required:
         assert name in source, f"Integration missing: {name}"
