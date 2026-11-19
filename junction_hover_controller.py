@@ -81,6 +81,48 @@ class JunctionHoverController:
         )
         return status, *request
 
+    def verify_correction(self, before, after):
+        """Evaluate 2D marker-center feedback in pixels; NO motor control."""
+        if self.latched:
+            return "SAFETY_LATCHED_NEUTRAL"
+
+        try:
+            target = tuple(float(v) for v in self.target_center)
+            a = tuple(float(v) for v in before["center"])
+            b = tuple(float(v) for v in after["center"])
+            if any(len(p) != 2 for p in (target, a, b)):
+                raise ValueError("Expected 2D points")
+            if not all(math.isfinite(v) for p in (target, a, b) for v in p):
+                raise ValueError("Nonfinite coordinate")
+            if not all(8 <= x <= 312 and 8 <= y <= 232 for x, y in (a, b)):
+                raise ValueError("Marker outside image bounds")
+        except (TypeError, ValueError, KeyError, IndexError, OverflowError):
+            self.latched = True
+            return "CORRECTION_UNVERIFIED_LATCHED"
+
+        # Offline-only provisional tolerances; not flight-calibrated.
+        deadband = 6.0
+        minimum_improvement = 3.0
+        maximum_axis_deterioration = 3.0
+        before_error = tuple(abs(a[i] - target[i]) for i in (0, 1))
+        after_error = tuple(abs(b[i] - target[i]) for i in (0, 1))
+
+        if all(e <= deadband for e in after_error):
+            if all(e <= deadband for e in before_error):
+                return "CORRECTION_ALREADY_CENTERED_NEUTRAL"
+            return "CORRECTION_CENTERED_NEUTRAL"
+
+        if any(after_error[i] - before_error[i] > maximum_axis_deterioration
+               for i in (0, 1)):
+            self.latched = True
+            return "CORRECTION_NOT_IMPROVED_LATCHED"
+
+        improvement = math.hypot(*before_error) - math.hypot(*after_error)
+        if improvement >= minimum_improvement:
+            return "CORRECTION_IMPROVED"
+        self.latched = True
+        return "CORRECTION_NOT_IMPROVED_LATCHED"
+
     def update(self, marker, phase="HOVER"):
         if phase == "RECOVERY":
             if self.latched:
@@ -289,6 +331,34 @@ def self_test():
     assert moving.update(marker(140, 120))[0] == "ACQUISITION_MOVING_NEUTRAL"
     assert moving.update(marker(160, 120))[0] == "ACQUISITION_MOVING_NEUTRAL"
     assert moving.reference is None
+
+    # Permanent offline regression tests for 2D feedback.
+    cases = [
+        ("X improves", (200, 120), (190, 120), "CORRECTION_IMPROVED", False),
+        ("Y improves", (160, 160), (160, 145), "CORRECTION_IMPROVED", False),
+        ("Both improve", (200, 160), (190, 145), "CORRECTION_IMPROVED", False),
+        ("Y deteriorates", (200, 120), (190, 180), "CORRECTION_NOT_IMPROVED_LATCHED", True),
+        ("X deteriorates", (160, 170), (170, 140), "CORRECTION_NOT_IMPROVED_LATCHED", True),
+        ("Insufficient improvement", (200, 120), (198, 120), "CORRECTION_NOT_IMPROVED_LATCHED", True),
+        ("Already centered", (160, 120), (160, 120), "CORRECTION_ALREADY_CENTERED_NEUTRAL", False),
+        ("Enter deadband", (167, 120), (165, 120), "CORRECTION_CENTERED_NEUTRAL", False),
+        ("Centered then drifts", (160, 120), (170, 120), "CORRECTION_NOT_IMPROVED_LATCHED", True),
+        ("Marker lost", (200, 120), None, "CORRECTION_UNVERIFIED_LATCHED", True),
+        ("Invalid coordinate", (200, 120), (float("nan"), 120), "CORRECTION_UNVERIFIED_LATCHED", True),
+        ("No target", (200, 120), (190, 120), "CORRECTION_UNVERIFIED_LATCHED", True),
+    ]
+    for label, before, after, expected, should_latch in cases:
+        c2d = JunctionHoverController(
+            target_center=None if label == "No target" else (160.0, 120.0)
+        )
+        first = {"center": before}
+        second = None if after is None else {"center": after}
+        actual = c2d.verify_correction(first, second)
+        assert actual == expected, (label, actual, expected)
+        assert c2d.latched == should_latch, label
+        print("PASS: 2D", label)
+    assert c2d.verify_correction({"center": (200, 120)}, {"center": (190, 120)}) == "SAFETY_LATCHED_NEUTRAL"
+    print("PASS: 12 offline 2D feedback regression cases + latched-state check")
 
     print("PASS: hover-controller safety and correction tests")
     print("NO DRONE CONNECTION. NO FLIGHT.")
