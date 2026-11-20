@@ -6,19 +6,33 @@ import paho.mqtt.client as mqtt
 from easygopigo3 import EasyGoPiGo3
 
 # ---------- MQTT configuration ----------
-MQTT_BROKER = "192.168.1.96"
-MQTT_PORT = 1883
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+from paho.mqtt import client as mqtt_module
 
-MQTT_COMMAND_TOPIC = "restaurant/tello/commands/start-mission"
-MQTT_CLIENT_ID = "raspi-start-button-" + str(int(time.time()))
+load_dotenv(Path(__file__).resolve().parent / "mqtt_config.env")
+
+MQTT_BROKER = os.environ["BROKER"]
+MQTT_PORT = int(os.environ["PORT"])
+MQTT_USERNAME = os.environ["USERNAME"]
+MQTT_PASSWORD = os.environ["PASSWD"]
+
+MQTT_COMMAND_TOPIC = os.environ["TOPIC"]
+MQTT_CLIENT_ID = os.environ["BUTTON_CLIENT_ID"]
 
 BUTTON_PORT = "AD1"
 
 # ---------- MQTT ----------
-mqtt_client = mqtt.Client(
-    mqtt.CallbackAPIVersion.VERSION2,
+mqtt_client = mqtt_module.Client(
+    mqtt_module.CallbackAPIVersion.VERSION2,
     client_id=MQTT_CLIENT_ID,
-    protocol=mqtt.MQTTv311,
+    protocol=mqtt_module.MQTTv311,
+)
+
+mqtt_client.username_pw_set(
+    username=MQTT_USERNAME,
+    password=MQTT_PASSWORD,
 )
 
 mqtt_connected = False
