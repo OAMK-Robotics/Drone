@@ -1,0 +1,37 @@
+seconds,phase,sample,marker_x_px,marker_y_px,image_file,event_detail
+7.16,BATTERY,,,,,75
+18.526,TAKEOFF_START,,,,,
+25.073,TAKEOFF_ACK,,,,,
+27.099,no_rc_1,1,159.0,98.0,no_rc_1_01.png,
+27.268,no_rc_1,2,158.0,99.25,no_rc_1_02.png,
+27.435,no_rc_1,3,158.5,99.5,no_rc_1_03.png,
+27.606,no_rc_1,4,158.75,99.25,no_rc_1_04.png,
+27.776,no_rc_1,5,158.0,98.75,no_rc_1_05.png,
+27.939,no_rc_1,6,157.5,99.0,no_rc_1_06.png,
+28.091,no_rc_1_SUMMARY,,,,,"6/6 valid; median (158.2,99.1); spread 1.4px"
+28.111,no_rc_2,1,156.5,98.0,no_rc_2_01.png,
+28.281,no_rc_2,2,156.0,97.75,no_rc_2_02.png,
+28.451,no_rc_2,3,156.0,97.25,no_rc_2_03.png,
+28.631,no_rc_2,4,156.5,97.25,no_rc_2_04.png,
+28.799,no_rc_2,5,156.0,96.25,no_rc_2_05.png,
+28.97,no_rc_2,6,156.0,94.5,no_rc_2_06.png,
+29.121,no_rc_2_SUMMARY,,,,,"6/6 valid; median (156.0,97.2); spread 2.8px"
+29.122,PULSE_START,,,,,"(10, 0, 0, 0)"
+29.733,PULSE_STOP,,,,,"(0, 0, 0, 0)"
+29.752,after_positive,1,152.75,91.25,after_positive_01.png,
+29.924,after_positive,2,153.0,93.0,after_positive_02.png,
+30.095,after_positive,3,152.25,92.0,after_positive_03.png,
+30.265,after_positive,4,153.0,91.0,after_positive_04.png,
+30.425,after_positive,5,152.25,89.0,after_positive_05.png,
+30.6,after_positive,6,151.75,90.0,after_positive_06.png,
+30.751,after_positive_SUMMARY,,,,,"6/6 valid; median (152.5,91.1); spread 2.1px"
+30.751,PULSE_START,,,,,"(-10, 0, 0, 0)"
+31.359,PULSE_STOP,,,,,"(0, 0, 0, 0)"
+31.366,after_negative,1,152.0,89.5,after_negative_01.png,
+31.533,after_negative,2,152.0,91.0,after_negative_02.png,
+31.703,after_negative,3,151.25,94.0,after_negative_03.png,
+31.875,after_negative,4,151.0,95.0,after_negative_04.png,
+32.045,after_negative,5,150.0,94.0,after_negative_05.png,
+32.216,after_negative,6,149.5,96.5,after_negative_06.png,
+32.368,after_negative_SUMMARY,,,,,"6/6 valid; median (151.1,94.0); spread 4.6px"
+36.212,LANDING_ACK,,,,,

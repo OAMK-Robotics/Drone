@@ -1,0 +1,73 @@
+=== MOTOR-RESPONSE EVIDENCE AUDIT (OFFLINE ONLY) ===
+
+ /mnt/data/drone_work/captures/drift_20_30cm_20261123_113737 rows=2 M23=0 M25=0 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=0
+  STOP Battery <40%: no takeoff
+
+ /mnt/data/drone_work/captures/drift_20_30cm_20261123_113843 rows=139 M23=91 M25=88 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=1
+  STOP Descent distance 45 cm outside SDK 20..40 guard
+
+ /mnt/data/drone_work/captures/drift_20_30cm_20261123_114430 rows=168 M23=78 M25=116 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=1
+  STOP 20-30cm SDK target not verified: [40.0, 40.0, 40.0, 40.0, 40.0]; recording kept; land
+
+ /mnt/data/drone_work/captures/drift_30cm_20261120_154558 rows=158 M23=108 M25=101 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=1
+  STOP 30cm SDK target not verified: [40.0, 40.0, 40.0, 40.0, 40.0]; recording kept; land
+
+ /mnt/data/drone_work/captures/paired_axis_forward_20261120_113237 rows=36 M23=21 M25=0 pulse_commands=0 pulse_starts=2 pulse_stops=2 landing_acks=1
+  no_rc_1 valid,time_s,median_x,median_y: (6, 32.649, 137.0, 57.5)
+  no_rc_2 valid,time_s,median_x,median_y: (6, 33.673, 137.12, 53.0)
+  after_positive valid,time_s,median_x,median_y: (4, 35.478, 133.25, 51.12)
+  after_negative valid,time_s,median_x,median_y: (5, 37.024, 133.25, 38.0)
+  +pulse apparent difference from projected early no-RC trend: (-4.08, 6.05) PIXELS; unreliable if drift not constant
+
+ /mnt/data/drone_work/captures/paired_axis_right_20261120_104915 rows=1 M23=0 M25=0 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=0
+
+ /mnt/data/drone_work/captures/paired_axis_right_20261120_104942 rows=12 M23=0 M25=0 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=1
+  STOP No-RC baseline not reliable: landing without pulses
+
+ /mnt/data/drone_work/captures/paired_axis_right_20261120_112827 rows=36 M23=24 M25=0 pulse_commands=0 pulse_starts=2 pulse_stops=2 landing_acks=1
+  no_rc_1 valid,time_s,median_x,median_y: (6, 27.52, 158.25, 99.12)
+  no_rc_2 valid,time_s,median_x,median_y: (6, 28.541, 156.0, 97.25)
+  after_positive valid,time_s,median_x,median_y: (6, 30.18, 152.5, 91.12)
+  after_negative valid,time_s,median_x,median_y: (6, 31.789, 151.12, 94.0)
+  +pulse apparent difference from projected early no-RC trend: (0.11, -3.13) PIXELS; unreliable if drift not constant
+
+ /mnt/data/drone_work/captures/streaming_axis_right_20261120_124334 rows=134 M23=76 M25=0 pulse_commands=3 pulse_starts=1 pulse_stops=0 landing_acks=1
+  STOP PULSE CANCELLED: Marker 23 missing in latest frame
+
+ /mnt/data/drone_work/captures/streaming_v2_axis_right_20261120_133118 rows=1 M23=0 M25=0 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=0
+  STOP Low battery: no takeoff
+
+ /mnt/data/drone_work/captures/streaming_v2_axis_right_20261120_133133 rows=1 M23=0 M25=0 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=0
+  STOP Low battery: no takeoff
+
+ /mnt/data/drone_work/captures/streaming_v2_axis_right_20261120_133255 rows=138 M23=88 M25=0 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=1
+  STOP PULSE CANCELLED: Insufficient Marker 23 tracking: 3/8
+
+ /mnt/data/drone_work/captures/streaming_v3_lowheight_right_20261120_142324 rows=140 M23=87 M25=0 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=1
+  STOP LOW-HEIGHT TARGET FAILED, NO MOTOR PULSES: Unstable SDK height: spread 10.0 cm
+
+ /mnt/data/drone_work/captures/streaming_v4_lowheight_right_20261120_150749 rows=170 M23=78 M25=129 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=1
+  STOP PULSE CANCELLED: Marker 23 missing in latest frame
+
+ /mnt/data/drone_work/captures/streaming_v5_marker25_right_20261123_152440 rows=143 M23=28 M25=84 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=0
+  STOP PULSE CANCELLED: Marker 25 missing in latest frame
+
+ /mnt/data/drone_work/captures/streaming_v5_marker25_right_20261123_152611 rows=176 M23=89 M25=45 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=1
+  STOP LOW-HEIGHT TARGET FAILED, NO MOTOR PULSES: Outside 30-40 cm SDK target: [50, 50, 50, 50, 50]
+
+ /mnt/data/drone_work/captures/streaming_v5_marker25_right_20261123_152721 rows=160 M23=61 M25=54 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=1
+  STOP PULSE CANCELLED: Marker 25 missing in latest frame
+
+ /mnt/data/drone_work/captures/streaming_v5_marker25_right_20261123_152931 rows=103 M23=59 M25=42 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=1
+  STOP No safe prevalidated descent for SDK height 80.0 cm
+
+ /mnt/data/drone_work/captures/streaming_v5_marker25_right_20261123_153039 rows=1 M23=0 M25=0 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=0
+  STOP Failed to grab video frames from video stream
+
+ /mnt/data/drone_work/captures/streaming_v5_marker25_right_20261123_153054 rows=1 M23=0 M25=0 pulse_commands=0 pulse_starts=0 pulse_stops=0 landing_acks=0
+  STOP Failed to grab video frames from video stream
+
+CONCLUSION: 3 individually logged streaming nonzero RC send(s); 4 paired +/− pulse start(s) (each pair script intended 4 sends per pulse).
+No CSV establishes physical motion ground truth or a validated motor-axis model.
+If no image-space sign reversal reproducible across separately collected trials: INCONCLUSIVE.
+No drone, network, or motor access.

@@ -1,0 +1,13 @@
+seconds,phase,sample,marker_x_px,marker_y_px,image_file,event_detail
+0.107,BATTERY,,,,,82
+26.449,TAKEOFF_START,,,,,
+35.417,TAKEOFF_ACK,,,,,
+37.449,no_rc_1,1,,,no_rc_1_01.png,
+37.618,no_rc_1,2,,,no_rc_1_02.png,
+37.788,no_rc_1,3,,,no_rc_1_03.png,
+37.955,no_rc_1,4,,,no_rc_1_04.png,
+38.123,no_rc_1,5,,,no_rc_1_05.png,
+38.295,no_rc_1,6,,,no_rc_1_06.png,
+38.458,no_rc_1_SUMMARY,,,,,Only 0/6 valid Marker 23 detections
+38.459,STOP,,,,,No-RC baseline not reliable: landing without pulses
+40.275,LANDING_ACK,,,,,

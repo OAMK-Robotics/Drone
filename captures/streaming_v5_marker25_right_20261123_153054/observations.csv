@@ -1,0 +1,2 @@
+elapsed_s,phase,event,marker23_x,marker23_y,marker25_x,marker25_y,sdk_height_cm,image,details
+5.440,GROUND,STOP,,,,,,,Failed to grab video frames from video stream

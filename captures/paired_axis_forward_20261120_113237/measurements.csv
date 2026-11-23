@@ -1,0 +1,37 @@
+seconds,phase,sample,marker_x_px,marker_y_px,image_file,event_detail
+7.157,BATTERY,,,,,72
+24.254,TAKEOFF_START,,,,,
+30.197,TAKEOFF_ACK,,,,,
+32.222,no_rc_1,1,139.25,54.75,no_rc_1_01.png,
+32.392,no_rc_1,2,139.0,56.5,no_rc_1_02.png,
+32.565,no_rc_1,3,137.25,57.5,no_rc_1_03.png,
+32.733,no_rc_1,4,135.5,58.5,no_rc_1_04.png,
+32.905,no_rc_1,5,136.5,58.25,no_rc_1_05.png,
+33.07,no_rc_1,6,136.75,57.5,no_rc_1_06.png,
+33.221,no_rc_1_SUMMARY,,,,,"6/6 valid; median (137.0,57.5); spread 3.6px"
+33.246,no_rc_2,1,135.75,55.0,no_rc_2_01.png,
+33.418,no_rc_2,2,135.5,53.5,no_rc_2_02.png,
+33.583,no_rc_2,3,135.75,53.25,no_rc_2_03.png,
+33.763,no_rc_2,4,138.5,52.75,no_rc_2_04.png,
+33.934,no_rc_2,5,138.75,52.0,no_rc_2_05.png,
+34.107,no_rc_2,6,138.75,51.25,no_rc_2_06.png,
+34.258,no_rc_2_SUMMARY,,,,,"6/6 valid; median (137.1,53.0); spread 2.4px"
+34.259,PULSE_START,,,,,"(0, 10, 0, 0)"
+34.867,PULSE_STOP,,,,,"(0, 0, 0, 0)"
+34.884,after_positive,1,,,after_positive_01.png,
+35.056,after_positive,2,,,after_positive_02.png,
+35.22,after_positive,3,134.0,51.5,after_positive_03.png,
+35.392,after_positive,4,133.75,51.25,after_positive_04.png,
+35.563,after_positive,5,132.75,51.0,after_positive_05.png,
+35.732,after_positive,6,132.75,50.25,after_positive_06.png,
+35.883,after_positive_SUMMARY,,,,,"4/6 valid; median (133.2,51.1); spread 1.0px"
+35.884,PULSE_START,,,,,"(0, -10, 0, 0)"
+36.493,PULSE_STOP,,,,,"(0, 0, 0, 0)"
+36.516,after_negative,1,,,after_negative_01.png,
+36.688,after_negative,2,131.5,46.25,after_negative_02.png,
+36.855,after_negative,3,133.25,44.25,after_negative_03.png,
+37.024,after_negative,4,133.75,38.0,after_negative_04.png,
+37.196,after_negative,5,133.0,35.0,after_negative_05.png,
+37.366,after_negative,6,134.75,32.5,after_negative_06.png,
+37.517,after_negative_SUMMARY,,,,,"Marker too far from frame centre: (133.2,38.0)"
+41.549,LANDING_ACK,,,,,

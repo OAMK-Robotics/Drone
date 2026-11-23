@@ -1,10 +1,10 @@
-from djitellopy import Tello
+﻿from djitellopy import Tello
 from threading import Thread, Event
 import time
 import cv2
 import paho.mqtt.client as mqtt
 
-MQTT_BROKER = "192.168.1.63"
+MQTT_BROKER = "127.0.0.1"
 MQTT_PORT = 1883
 MQTT_TOPIC = "restaurant/tello/events/customer-detected"
 
@@ -29,7 +29,7 @@ def publish_table_event(pad):
         client.disconnect()
         client.loop_stop()
 
-tello = Tello(host="192.168.1.63")
+tello = Tello(host="192.168.10.1")
 tello.connect()
 
 battery = tello.get_battery()
@@ -184,4 +184,6 @@ finally:
 
     tello.streamoff()
     tello.end()
+
+
 
