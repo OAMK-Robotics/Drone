@@ -188,6 +188,7 @@ def run_tello_mission():
 
         tello = Tello(host=TELLO_IP)
         tello.connect()
+        tello.set_speed(10)  # cm/s
 
         log("[CHECK] SDK connection and initial telemetry received")
 
@@ -203,9 +204,7 @@ def run_tello_mission():
         last_printed_pad = None
         pad = None
 
-        search_direction = "right"
-        search_distance = 50
-        max_search_steps = 10
+        max_search_steps = 5
         search_step = 0
 
         stage = "taking off"
@@ -218,10 +217,10 @@ def run_tello_mission():
 
         log("[CHECK] Takeoff command completed")
         time.sleep(2)
-
-        stage = "moving forward 75 cm"
-        log("[CHECK] Moving forward 75 cm")
-        tello.move_forward(75)
+        
+        stage = "moving up 70 cm"
+        log("[CHECK] Moving up 70 cm")
+        tello.move_up(70)
 
         while not target_found and search_step < max_search_steps:
             stage = f"reading mission pad at search step {search_step}"
@@ -249,31 +248,15 @@ def run_tello_mission():
                 target_found = True
 
             else:
-                # Original search movements preserved.
-                if search_direction == "right":
-                    stage = "search: moving right 50 cm"
-                    log(f"[CHECK] {stage}")
-                    tello.move_right(search_distance)
-
-                    search_direction = "left"
-
-                    stage = "search: moving left 50 cm"
-                    log(f"[CHECK] {stage}")
-                    tello.move_left(search_distance)
-
-                else:
-                    stage = "search: moving left 50 cm"
-                    log(f"[CHECK] {stage}")
-                    tello.move_left(search_distance)
-
-                    search_direction = "right"
-
-                    stage = "search: moving right 50 cm"
-                    log(f"[CHECK] {stage}")
-                    tello.move_right(search_distance)
-
-                search_step += 1
-                time.sleep(0.5)
+                stage = "moving forward 300 cm"
+                log("[CHECK] Moving forward 300 cm")
+                tello.move_forward(300)
+                
+                tello.rotate_clockwise(180)
+                            
+                time.sleep(1)
+            search_step += 1
+            time.sleep(0.5)
 
         if target_found:
             # Log locally instead of publishing the table again.
@@ -284,10 +267,6 @@ def run_tello_mission():
             )
         else:
             publish("no-table-found")
-
-        stage = "moving back 75 cm"
-        log("[CHECK] Moving back 75 cm")
-        tello.move_back(75)
 
         stage = "landing"
         log("[CHECK] Sending landing command")
